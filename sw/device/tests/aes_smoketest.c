@@ -49,15 +49,14 @@ const test_config_t kTestConfig;
 
 static bool aes_input_ready(const dif_aes_t *aes) {
   bool status;
-  CHECK(dif_aes_get_status(aes, kDifAesStatusInputReady, &status) == kDifAesOk);
+  CHECK(dif_aes_get_status(aes, kDifAesStatusInputReady, &status) == kDifOk);
 
   return status;
 }
 
 static bool aes_output_valid(const dif_aes_t *aes) {
   bool status;
-  CHECK(dif_aes_get_status(aes, kDifAesStatusOutputValid, &status) ==
-        kDifAesOk);
+  CHECK(dif_aes_get_status(aes, kDifAesStatusOutputValid, &status) == kDifOk);
 
   return status;
 }
@@ -71,11 +70,9 @@ bool test_main(void) {
   entropy_testutils_boot_mode_init();
 
   // Initialise AES.
-  dif_aes_params_t params = {
-      .base_addr = mmio_region_from_addr(TOP_EARLGREY_AES_BASE_ADDR),
-  };
-  CHECK(dif_aes_init(params, &aes) == kDifAesOk);
-  CHECK(dif_aes_reset(&aes) == kDifAesOk);
+  CHECK(dif_aes_init(mmio_region_from_addr(TOP_EARLGREY_AES_BASE_ADDR), &aes) ==
+        kDifOk);
+  CHECK(dif_aes_reset(&aes) == kDifOk);
 
   // Mask the key. Note that this should not be done manually. Software is
   // expected to get the key in two shares right from the beginning.

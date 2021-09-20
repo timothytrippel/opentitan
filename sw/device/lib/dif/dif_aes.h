@@ -10,6 +10,9 @@
 
 #include "sw/device/lib/base/macros.h"
 #include "sw/device/lib/base/mmio.h"
+#include "sw/device/lib/dif/dif_base.h"
+
+#include "sw/device/lib/dif/autogen/dif_aes_autogen.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -170,47 +173,24 @@ typedef enum dif_aes_alert {
 } dif_aes_alert_t;
 
 /**
- * Hardware instantiation parameters for AES.
- *
- * This struct describes information about the underlying hardware that is
- * not determined until the hardware design is used as part of a top-level
- * design.
- */
-typedef struct dif_aes_params {
-  /**
-   * The base address for the AES hardware registers.
-   */
-  mmio_region_t base_addr;
-} dif_aes_params_t;
-
-/**
- * A handle to AES.
- *
- * This type should be treated as opaque by users.
- */
-typedef struct dif_aes {
-  dif_aes_params_t params;
-} dif_aes_t;
-
-/**
  * The result of a AES operation.
  */
 typedef enum dif_aes_result {
   /**
    * Indicates that the operation succeeded.
    */
-  kDifAesOk = 0,
+  kDifAesOk = kDifOk,
   /**
    * Indicates some unspecified failure.
    */
-  kDifAesError = 1,
+  kDifAesError = kDifError,
   /**
    * Indicates that some parameter passed into a function failed a
    * precondition.
    *
    * When this value is returned, no hardware operations occurred.
    */
-  kDifAesBadArg = 2,
+  kDifAesBadArg = kDifBadArg,
   /**
    * Device is busy, and cannot perform the requested operation.
    */
@@ -226,12 +206,12 @@ typedef enum dif_aes_result {
  *
  * This function does not actuate the hardware.
  *
- * @param params Hardware instantiation parameters.
+ * @param base_addr Hardware instantiation base address.
  * @param[out] aes Out param for the initialised handle.
  * @return The result of the operation.
  */
 OT_WARN_UNUSED_RESULT
-dif_aes_result_t dif_aes_init(dif_aes_params_t params, dif_aes_t *aes);
+dif_result_t dif_aes_init(mmio_region_t base_addr, dif_aes_t *aes);
 
 /**
  * Resets an instance of AES.
@@ -242,7 +222,7 @@ dif_aes_result_t dif_aes_init(dif_aes_params_t params, dif_aes_t *aes);
  * @return The result of the operation.
  */
 OT_WARN_UNUSED_RESULT
-dif_aes_result_t dif_aes_reset(const dif_aes_t *aes);
+dif_result_t dif_aes_reset(const dif_aes_t *aes);
 
 /**
  * Begins an AES transaction in ECB mode.
@@ -400,8 +380,7 @@ typedef enum dif_aes_trigger {
  * @return The result of the operation.
  */
 OT_WARN_UNUSED_RESULT
-dif_aes_result_t dif_aes_trigger(const dif_aes_t *aes,
-                                 dif_aes_trigger_t trigger);
+dif_result_t dif_aes_trigger(const dif_aes_t *aes, dif_aes_trigger_t trigger);
 
 /**
  * AES Status flags.
@@ -453,8 +432,8 @@ typedef enum dif_aes_status {
  * @return The result of the operation.
  */
 OT_WARN_UNUSED_RESULT
-dif_aes_result_t dif_aes_get_status(const dif_aes_t *aes, dif_aes_status_t flag,
-                                    bool *set);
+dif_result_t dif_aes_get_status(const dif_aes_t *aes, dif_aes_status_t flag,
+                                bool *set);
 
 /**
  * Forces a particular alert, causing it to be serviced as if hardware had
@@ -465,8 +444,7 @@ dif_aes_result_t dif_aes_get_status(const dif_aes_t *aes, dif_aes_status_t flag,
  * @return The result of the operation.
  */
 OT_WARN_UNUSED_RESULT
-dif_aes_result_t dif_aes_alert_force(const dif_aes_t *aes,
-                                     dif_aes_alert_t alert);
+dif_result_t dif_aes_alert_force(const dif_aes_t *aes, dif_aes_alert_t alert);
 
 #ifdef __cplusplus
 }  // extern "C"
