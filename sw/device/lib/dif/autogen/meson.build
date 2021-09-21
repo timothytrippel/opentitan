@@ -2,13 +2,13 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
-# Autogen UART DIF library
-sw_lib_dif_autogen_uart = declare_dependency(
+# Autogen Alert Handler DIF library
+sw_lib_dif_autogen_alert_handler = declare_dependency(
   link_with: static_library(
-    'sw_lib_dif_autogen_uart',
+    'sw_lib_dif_autogen_alert_handler',
     sources: [
-      hw_ip_uart_reg_h,
-      'dif_uart_autogen.c',
+      hw_ip_alert_handler_reg_h,
+      'dif_alert_handler_autogen.c',
     ],
     dependencies: [
       sw_lib_mmio,
@@ -23,6 +23,20 @@ sw_lib_dif_autogen_lc_ctrl = declare_dependency(
     sources: [
       hw_ip_lc_ctrl_reg_h,
       'dif_lc_ctrl_autogen.c',
+    ],
+    dependencies: [
+      sw_lib_mmio,
+    ],
+  )
+)
+
+# Autogen UART DIF library
+sw_lib_dif_autogen_uart = declare_dependency(
+  link_with: static_library(
+    'sw_lib_dif_autogen_uart',
+    sources: [
+      hw_ip_uart_reg_h,
+      'dif_uart_autogen.c',
     ],
     dependencies: [
       sw_lib_mmio,
