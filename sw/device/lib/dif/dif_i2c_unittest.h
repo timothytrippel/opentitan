@@ -1,0 +1,32 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+
+#ifndef OPENTITAN_SW_DEVICE_LIB_DIF_DIF_I2C_UNITTEST_H_
+#define OPENTITAN_SW_DEVICE_LIB_DIF_DIF_I2C_UNITTEST_H_
+
+#include <cstring>
+#include <limits>
+#include <ostream>
+
+#include "gtest/gtest.h"
+#include "sw/device/lib/base/mmio.h"
+#include "sw/device/lib/base/testing/mock_mmio.h"
+#include "sw/device/lib/dif/dif_i2c.h"
+
+#include "i2c_regs.h"  // Generated.
+
+namespace dif_i2c_unittest {
+namespace {
+using ::mock_mmio::MmioTest;
+using ::mock_mmio::MockDevice;
+
+class I2cTest : public testing::Test, public MmioTest {
+ protected:
+  dif_i2c_t i2c_ = {.base_addr = dev().region()};
+};
+
+}  // namespace
+}  // namespace dif_i2c_unittest
+
+#endif  // OPENTITAN_SW_DEVICE_LIB_DIF_DIF_I2C_UNITTEST_H_
