@@ -336,6 +336,7 @@ entropy_src_smoketest_lib = declare_dependency(
     sources: ['entropy_src_smoketest.c'],
     dependencies: [
       sw_lib_dif_entropy_src,
+      sw_lib_testing_entropy_testutils,
       sw_lib_mmio,
       sw_lib_runtime_log,
     ],

@@ -63,3 +63,30 @@ void entropy_testutils_boot_mode_init(void) {
   setup_csrng();
   setup_edn();
 }
+
+void entropy_testutils_entropy_src_disable(dif_entropy_src_t entropy_src) {
+  // Disable entropy for test purpose, as it has been turned on by ROM
+  CHECK_DIF_OK(dif_entropy_src_disable(&entropy_src));
+
+  const dif_entropy_src_config_t config = {
+      .mode = kDifEntropySrcModePtrng,
+      .tests =
+          {
+              [kDifEntropySrcTestRepCount] = false,
+              [kDifEntropySrcTestAdaptiveProportion] = false,
+              [kDifEntropySrcTestBucket] = false,
+              [kDifEntropySrcTestMarkov] = false,
+              [kDifEntropySrcTestMailbox] = false,
+              [kDifEntropySrcTestVendorSpecific] = false,
+          },
+      // this field needs to manually toggled by software.  Disable for now
+      .reset_health_test_registers = false,
+      .single_bit_mode = kDifEntropySrcSingleBitModeDisabled,
+      .route_to_firmware = true,
+      .fw_override = {
+          .enable = false,
+          .entropy_insert_enable = false,
+          .buffer_threshold = kDifEntropyFifoIntDefaultThreshold,
+      }};
+  CHECK_DIF_OK(dif_entropy_src_configure(&entropy_src, config));
+}
