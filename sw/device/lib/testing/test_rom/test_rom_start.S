@@ -134,6 +134,9 @@ _reset_start:
 _start:
   .globl _start
 
+  // TODO: add AST blind data copy initialization here. See
+  //       `sw/device/silicon_creator/mask_rom/mask_rom_start.S` lines 163--186.
+
   // Enable entropy complex - this is not the full enable
   li   a0, TOP_EARLGREY_ENTROPY_SRC_BASE_ADDR
   li   t0, 0x55505a
