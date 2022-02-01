@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
+#include "sw/device/lib/base/macros.h"
 #include "sw/device/lib/base/memory.h"
 #include "sw/device/lib/base/mmio.h"
 #include "sw/device/lib/dif/dif_entropy_src.h"
@@ -26,10 +27,17 @@ const uint32_t kExpectedEntropyData[] = {
     0xe8126c66, 0x69efaf13, 0x8cc59ac2, 0xb7f3bcad, 0x06dc9089, 0x1f4c6ef2,
 };
 
+/*extern void closed_source_config(void);*/
+OT_ATTR_WEAK
+void closed_source_config(void) { LOG_INFO("Open-Source"); }
+
 bool test_main() {
   dif_entropy_src_t entropy_src;
   CHECK_DIF_OK(dif_entropy_src_init(
       mmio_region_from_addr(TOP_EARLGREY_ENTROPY_SRC_BASE_ADDR), &entropy_src));
+
+  // Invoke weak symbol that can be overriden in closed source code.
+  closed_source_config();
 
   // Disable entropy for test purpose, as it has been turned on by ROM
   CHECK_DIF_OK(dif_entropy_src_disable(&entropy_src));
