@@ -469,14 +469,14 @@ def opentitan_functest(
 
     if "cw310" in targets:
         test_name = "cw310_{}".format(name)
-        test_bin = "{}_prog_cw310_bin".format(name)
+        test_bin = "{}_prog_cw310_bin_signed_test_key_0".format(name)
 
         if cw310 == None:
             cw310 = cw310_params()
         cargs = _format_list("args", args, cw310, test_bin = test_bin)
         cdata = _format_list("data", data, cw310, test_bin = test_bin)
 
-        if "manual" not in verilator.get("tags", []):
+        if "manual" not in cw310.get("tags", []):
             all_tests.append(test_name)
 
         native.sh_test(

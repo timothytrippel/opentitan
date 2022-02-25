@@ -278,3 +278,12 @@ opentitan_functest(
         ],
     ),
 )
+
+opentitan_functest(
+    name = "mask_rom_test_signed",
+    srcs = [
+        "mask_rom_test.c",
+    ],
+    output_signed = True,
+    targets = ["cw310"],  # Can only run in CW310 right now.
+)
