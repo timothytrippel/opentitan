@@ -23,18 +23,19 @@ load("//third_party/github:repos.bzl", "github_tools_repos")
 github_tools_repos()
 
 # Various linters
+# Go Toolchain
+# Note: this should be loaded before com_github_bazel_builtools.
+load("//third_party/go:repos.bzl", "go_repos")
+go_repos()
+load("//third_party/go:deps.bzl", "go_deps")
+go_deps()
+
 # Note: load this early so the preferred version of
 # com_github_bazel_builtools wins.
 load("//third_party/lint:repos.bzl", "lint_repos")
 lint_repos()
 load("//third_party/lint:deps.bzl", "lint_deps")
 lint_deps()
-
-# Go Toolchain
-load("//third_party/go:repos.bzl", "go_repos")
-go_repos()
-load("//third_party/go:deps.bzl", "go_deps")
-go_deps()
 
 # Python Toolchain + PIP Dependencies
 load("//third_party/python:repos.bzl", "python_repos")
