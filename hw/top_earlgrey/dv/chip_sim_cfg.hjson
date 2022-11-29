@@ -1721,6 +1721,13 @@
       // This is to disable the ping-timeout check in cip_base_scoreboard, see OT issue #16055.
       run_opts: ["+en_scb_ping_chk=0"]
     }
+    {
+      name: chip_sw_timing_test
+      uvm_test_seq: chip_sw_base_vseq
+      sw_images: ["//sw/device/tests:timing_test:1"]
+      en_run_modes: ["sw_test_mode_test_rom"]
+      reseed: 1
+    }
   ]
 
   // List of regressions.

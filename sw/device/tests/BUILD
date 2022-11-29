@@ -1946,3 +1946,14 @@ opentitan_functest(
         "//sw/device/lib/testing/test_framework:ottf_main",
     ],
 )
+
+opentitan_functest(
+    name = "timing_test",
+    srcs = ["timing_test.c"],
+    deps = [
+        "//sw/device/lib/base:csr",
+        "//sw/device/lib/runtime:ibex",
+        "//sw/device/lib/runtime:log",
+        "//sw/device/lib/testing/test_framework:ottf_main",
+    ],
+)

@@ -22,6 +22,9 @@ build --incompatible_enable_cc_toolchain_resolution
 # accessed like we do in util/BUILD
 build --workspace_status_command=util/get_workspace_status.sh
 
+# Always build verilator with the maximum number of threads available.
+build --//hw:verilator_options=--threads,HOST_CPUS
+
 # This enables convenient building for opentitan targets with the argument
 # --config=riscv32
 build:riscv32 --platforms=@crt//platforms/riscv32:opentitan
