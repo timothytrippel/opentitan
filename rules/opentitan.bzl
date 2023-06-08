@@ -1147,6 +1147,7 @@ def opentitan_flash_binary(
         filegroup              named: <name>
           Containing all targets across all devices for the above generated rules.
     """
+
     deps = kwargs.pop("deps", [])
     all_targets = []
     binaries = []

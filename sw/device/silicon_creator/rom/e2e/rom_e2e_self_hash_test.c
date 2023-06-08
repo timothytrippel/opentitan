@@ -40,17 +40,22 @@ enum {
  *    `stat -c %s <path to *.bin>`
  *
  * 3. Compute and update the golden ROM hashes below (`k*GoldenRomHash`) with:
- *    `sha256sum <path to *.bin>`
+ *    `sha256sum <path to *.bin> | cut -f1 -d' ' | \
+ *       sed -e "s/......../0x&,\n/g" | tac`
  *    Note, make sure to reverse the byte order so order is little endian.
  */
-const size_t kGoldenRomSizeBytes = 32648;
+const size_t kGoldenRomSizeBytes = 32652;
 const uint32_t kSimDvGoldenRomHash[kSha256HashSizeIn32BitWords] = {
-    0xa89b5d02, 0x45ac9691, 0x37ecafa7, 0x3feb8e85,
-    0x8856d902, 0x36012a3e, 0x11ca064b, 0xa5358f02,
+    // sha256sum rom_with_real_keys_sim_dv.bin | \
+    // cut -f1 -d' ' | sed -e "s/......../0x&,\n/g" | tac
+    0xaa23e75d, 0x45ebcbde, 0x39eaba7d, 0x302f3a60,
+    0x0f205de0, 0x5c2a621c, 0x34f00f13, 0x6852995c,
 };
 const uint32_t kFpgaCw310GoldenRomHash[kSha256HashSizeIn32BitWords] = {
-    0x40e52a49, 0x81729b5d, 0x05f8221f, 0xab685ed2,
-    0xec153ccc, 0xf372b97f, 0x8f9136bc, 0x0ce5576f,
+    // sha256sum rom_with_real_keys_fpga_cw310.bin | \
+    // cut -f1 -d' ' | sed -e "s/......../0x&,\n/g" | tac
+    0x5a351c76, 0xcbbcbbdd, 0x127f2ffd, 0x013eda23,
+    0xd6f6dd15, 0x75f087eb, 0xf4952d1a, 0x845cf3dd,
 };
 
 // We hash the ROM using the SHA256 algorithm and print the hash to the console.
