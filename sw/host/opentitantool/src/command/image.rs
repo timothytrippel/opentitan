@@ -203,7 +203,7 @@ impl CommandDispatch for ManifestUpdateCommand {
 
         // Update `length` to be able to generate signatures.
         let mut unsigned_ext_size: usize = 0;
-        if self.spx_signature.is_some() || spx_private_key.is_some() {
+        if self.spx_signature.is_some() || self.spx_key.is_some() {
             image.set_extension_entry(1, MANIFEST_EXT_ID_SPX_SIGNATURE, image.size as u32)?;
             unsigned_ext_size += std::mem::size_of::<ManifestExtSpxSignature>();
         }
