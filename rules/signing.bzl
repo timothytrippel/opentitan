@@ -11,19 +11,29 @@ def _offline_presigning_artifacts(ctx):
     for src in ctx.files.srcs:
         pre = ctx.actions.declare_file(paths.replace_extension(src.basename, ".pre-signing"))
         bins.append(pre)
+        inputs = [
+            src,
+            ctx.file.manifest,
+            ctx.file.rsa_key,
+            ctx.executable._tool,
+        ]
+        spx_args = []
+        if ctx.file.spx_key:
+            spx_args.append("--spx-key={}".format(ctx.file.spx_key.path))
+            inputs.append(ctx.file.spx_key)
         ctx.actions.run(
             outputs = [pre],
-            inputs = [src, ctx.file.manifest, ctx.file.key_file, ctx.executable._tool],
+            inputs = inputs,
             arguments = [
                 "--rcfile=",
                 "image",
                 "manifest",
                 "update",
                 "--manifest={}".format(ctx.file.manifest.path),
-                "--rsa-key={}".format(ctx.file.key_file.path),
+                "--rsa-key={}".format(ctx.file.rsa_key.path),
                 "--output={}".format(pre.path),
                 src.path,
-            ],
+            ] + spx_args,
             executable = ctx.executable._tool,
         )
 
@@ -52,7 +62,12 @@ offline_presigning_artifacts = rule(
     attrs = {
         "srcs": attr.label_list(allow_files = True, doc = "Binary files to generate digests for"),
         "manifest": attr.label(allow_single_file = True, doc = "Manifest for this image"),
-        "key_file": attr.label(allow_single_file = True, doc = "Public key to validate this image"),
+        "rsa_key": attr.label(
+            allow_single_file = True,
+            mandatory = True,
+            doc = "RSA public key to validate this image",
+        ),
+        "spx_key": attr.label(allow_single_file = True, doc = "SPX public key to validate this image"),
         "_tool": attr.label(
             default = "//sw/host/opentitantool:opentitantool",
             executable = True,
@@ -110,30 +125,47 @@ def _offline_signature_attach(ctx):
             for file in src[DefaultInfo].files.to_list():
                 f = _strip_all_extensions(file.basename)
                 inputs[f] = {"bin": file}
-    for sig in ctx.files.signatures:
+    for sig in ctx.files.rsa_signatures:
         f = _strip_all_extensions(sig.basename)
         if f not in inputs:
-            fail("Signature {} does not have a corresponding entry in srcs".format(sig))
-        inputs[f]["sig"] = sig
+            fail("RSA signature {} does not have a corresponding entry in srcs".format(sig.path))
+        inputs[f]["rsa_sig"] = sig
+    for sig in ctx.files.spx_signatures:
+        f = _strip_all_extensions(sig.basename)
+        if f not in inputs:
+            fail("SPX signature {} does not have a corresponding entry in srcs".format(sig.path))
+        if "rsa_sig" not in inputs[f]:
+            fail("SPX signature {} does not have corresponding RSA signature".format(sig.path))
+        inputs[f]["spx_sig"] = sig
 
     outputs = []
     for f in inputs:
         if inputs[f].get("bin") == None:
             print("WARNING: No pre-signed binary for", f)
             continue
-        if inputs[f].get("sig") == None:
-            print("WARNING: No signature file for", f)
+        if inputs[f].get("rsa_sig") == None:
+            print("WARNING: No RSA signature file for", f)
             continue
         out = ctx.actions.declare_file(paths.replace_extension(f, ".signed.bin"))
+        action_deps = [
+            inputs[f]["bin"],
+            inputs[f]["rsa_sig"],
+            ctx.executable._tool,
+        ]
+        args = [
+            "--rcfile=",
+            "image",
+            "manifest",
+            "update",
+            "--rsa-signature={}".format(inputs[f]["rsa_sig"].path),
+        ]
+        if inputs[f].get("spx_sig"):
+            action_deps.append(inputs[f]["spx_sig"])
+            args.append("--spx-signature={}".format(inputs[f]["spx_sig"].path))
         ctx.actions.run(
             outputs = [out],
-            inputs = [inputs[f]["bin"], inputs[f]["sig"], ctx.executable._tool],
-            arguments = [
-                "--rcfile=",
-                "image",
-                "manifest",
-                "update",
-                "--rsa-signature={}".format(inputs[f]["sig"].path),
+            inputs = action_deps,
+            arguments = args + [
                 "--output={}".format(out.path),
                 inputs[f]["bin"].path,
             ],
@@ -146,7 +178,8 @@ offline_signature_attach = rule(
     implementation = _offline_signature_attach,
     attrs = {
         "srcs": attr.label_list(allow_files = True, providers = [PreSigningBinary], doc = "Binary files to sign"),
-        "signatures": attr.label_list(allow_files = True, doc = "Signed digest files"),
+        "rsa_signatures": attr.label_list(allow_files = True, doc = "RSA signed digest files"),
+        "spx_signatures": attr.label_list(allow_files = True, doc = "SPX+ signed digest files"),
         "_tool": attr.label(
             default = "//sw/host/opentitantool:opentitantool",
             executable = True,

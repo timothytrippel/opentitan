@@ -40,8 +40,8 @@ offline_signature_attach(
     srcs = [
         ":presigning",
     ],
-    signatures = [
-        "//signing/examples/signatures:signatures",
+    rsa_signatures = [
+        "//signing/examples/signatures:rsa_signatures",
     ],
     tags = ["manual"],
 )
