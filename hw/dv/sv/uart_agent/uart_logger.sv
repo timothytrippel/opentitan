@@ -22,7 +22,7 @@ class uart_logger extends uvm_component;
     string fname = {`gfn, ".log"};
     if (cfg.write_logs_to_file) begin
       logs_output_fd = $fopen(fname, "w");
-      `DV_CHECK_FATAL(!logs_output_fd, $sformatf("Failed to open %s for writing", fname))
+      `DV_CHECK_FATAL(logs_output_fd != 0, $sformatf("Failed to open %s for writing", fname))
     end
     capture_logs();
   endtask
