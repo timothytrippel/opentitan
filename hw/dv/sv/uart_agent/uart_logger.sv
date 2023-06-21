@@ -43,7 +43,7 @@ class uart_logger extends uvm_component;
       forever begin
         log_item_fifo.get(item);
         char = string'(item.data);
-        `uvm_info(`gfn, $sformatf("received char: %0s", char), UVM_DEBUG)
+        `uvm_info(`gfn, $sformatf("received char: %0s", char), UVM_LOW)
         // Continue concatenating chars into the log string untl lf or cr is encountered.
         if (item.data inside {lf, cr}) begin
           print_log(log);

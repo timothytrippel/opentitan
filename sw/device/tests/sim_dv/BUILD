@@ -1374,3 +1374,14 @@ opentitan_functest(
         "//sw/device/lib/testing/test_framework:ottf_main",
     ],
 )
+
+opentitan_functest(
+    name = "frontdoor_uart_logger_test",
+    srcs = ["frontdoor_uart_logger_test.c"],
+    targets = ["dv"],
+    deps = [
+        "//sw/device/lib/runtime:log",
+        "//sw/device/lib/runtime:print",
+        "//sw/device/lib/testing/test_framework:ottf_main",
+    ],
+)

@@ -103,3 +103,4 @@
 `include "chip_sw_power_sleep_load_vseq.sv"
 `include "chip_sw_ast_clk_rst_inputs_vseq.sv"
 `include "chip_sw_power_virus_vseq.sv"
+`include "chip_sw_frontdoor_uart_logger_vseq.sv"

@@ -1911,6 +1911,14 @@
       en_run_modes: ["sw_test_mode_test_rom"]
       run_opts: ["+use_otp_image=OtpTypeCustom"]
     }
+    {
+      name: chip_sw_frontdoor_uart_logger
+      uvm_test_seq: chip_sw_frontdoor_uart_logger_vseq
+      sw_images: ["//sw/device/tests/sim_dv:frontdoor_uart_logger_test:1"]
+      en_run_modes: ["sw_test_mode_test_rom"]
+      run_opts: ["+en_uart_logger=1"]
+      reseed: 1
+    }
   ]
 
   // List of regressions.
