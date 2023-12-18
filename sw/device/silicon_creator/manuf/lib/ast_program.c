@@ -7,6 +7,7 @@
 #include "sw/device/lib/dif/dif_flash_ctrl.h"
 #include "sw/device/lib/dif/dif_pinmux.h"
 #include "sw/device/lib/dif/dif_uart.h"
+#include "sw/device/lib/runtime/hart.h"
 #include "sw/device/lib/runtime/log.h"
 #include "sw/device/lib/runtime/print.h"
 #include "sw/device/lib/testing/flash_ctrl_testutils.h"
@@ -88,6 +89,14 @@ status_t ast_program_init(bool verbose) {
 }
 
 status_t ast_program_config(bool verbose) {
+  // Add delay to synchronize DFT strap sampling with HyperDebug UART console
+  // swapping (since DFT straps use same UART pins as OpenTitan console).
+  // Note: this should match the delay time in
+  // `sw/host/opentitanlib/src/app/mod.rs:reset_target()`.
+  if (kDeviceType == kDeviceSilicon) {
+    busy_spin_micros(/*usec=*/5 * 1000);  // Wait 5ms.
+  }
+
   TRY(ast_program_init(verbose));
 
   // Read AST calibration values from flash.
@@ -97,6 +106,7 @@ status_t ast_program_config(bool verbose) {
       (kFlashInfoFieldAstCalibrationData.page * device_info.bytes_per_page) +
       kFlashInfoFieldAstCalibrationData.byte_offset;
   uint32_t ast_data[kFlashInfoAstCalibrationDataSizeIn32BitWords];
+  TRY(flash_ctrl_testutils_wait_for_init(&flash_state));
   TRY(flash_ctrl_testutils_read(&flash_state, byte_address,
                                 kFlashInfoFieldAstCalibrationData.partition,
                                 ast_data, kDifFlashCtrlPartitionTypeInfo,
