@@ -33,6 +33,9 @@ typedef struct screen_bitmap {
 /**
  * Example bitmap(s).
  */
+extern const screen_bitmap_t kChromeLogoBitmap;
+extern const screen_bitmap_t kCrosLogoBitmap;
+extern const screen_bitmap_t kGoogleLogoBitmap;
 extern const screen_bitmap_t kOtLogoBitmap;
 
 #endif  // OPENTITAN_SW_DEVICE_EXAMPLES_TEACUP_DEMOS_DATA_BITMAPS_H_

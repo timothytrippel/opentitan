@@ -5,6 +5,7 @@
 load(
     "//rules/opentitan:defs.bzl",
     "opentitan_test",
+    "silicon_params",
 )
 
 package(default_visibility = ["//visibility:public"])
@@ -36,6 +37,9 @@ opentitan_test(
         "//hw/top_earlgrey:silicon_owner_proda_rom_ext": None,
         "//hw/top_earlgrey:silicon_owner_sival_rom_ext": None,
     },
+    silicon = silicon_params(
+        timeout = "long",
+    ),
     deps = [
         "//hw/top_earlgrey/sw/autogen:top_earlgrey",
         "//sw/device/examples/teacup_demos/data:bitmaps",

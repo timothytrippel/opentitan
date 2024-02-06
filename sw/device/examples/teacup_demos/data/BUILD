@@ -9,6 +9,9 @@ package(default_visibility = ["//visibility:public"])
 cc_library(
     name = "bitmaps",
     srcs = [
+        "chrome_logo_bitmap.c",
+        "chromeos_logo_bitmap.c",
+        "google_logo_bitmap.c",
         "ot_logo_bitmap.c",
     ],
     hdrs = ["bitmaps.h"],

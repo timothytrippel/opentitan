@@ -34,7 +34,7 @@ static screen_t screen;
  */
 enum {
   // Demo Control
-  kDemoNumCycles = 50,
+  kDemoNumCycles = 300,
 
   // LED Control
   kLedNumColorsInCycle = 4,
@@ -45,7 +45,7 @@ enum {
 
   // Screen Control
   kScreenSpiDataCommandGpio = 1,
-  kScreenBitmapsInCycle = 1,
+  kScreenBitmapsInCycle = 3,
 };
 
 static const led_rgb_color_t kLedColorBlue = {
@@ -100,7 +100,10 @@ static const pinmux_pad_attributes_t kPinmuxPadAttrs[] = {
  * Screen bitmaps.
  */
 const screen_bitmap_t *kScreenBitmaps[kScreenBitmapsInCycle] = {
+    &kGoogleLogoBitmap,
     &kOtLogoBitmap,
+    /*&kCrosLogoBitmap,*/
+    &kChromeLogoBitmap,
 };
 
 static status_t peripheral_init(void) {
