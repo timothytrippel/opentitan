@@ -39,6 +39,13 @@ opentitan_test(
     },
     silicon = silicon_params(
         timeout = "long",
+        test_cmd = """
+        --exec="transport init"
+        --exec="gpio set-mode IOA4 Input"
+        --exec="bootstrap --clear-uart=true {firmware}"
+        --exec="console --non-interactive --exit-success='{exit_success}' --exit-failure='{exit_failure}'"
+        no-op
+    """,
     ),
     deps = [
         "//hw/top_earlgrey/sw/autogen:top_earlgrey",

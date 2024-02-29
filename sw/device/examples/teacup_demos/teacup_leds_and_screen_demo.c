@@ -73,30 +73,6 @@ static const led_rgb_color_t kLedColorGreen = {
 };
 
 /**
- * Pinmux pad attributes for the SPI host pins.
- */
-static const pinmux_pad_attributes_t kPinmuxPadAttrs[] = {
-    {
-        .pad = kTopEarlgreyMuxedPadsIoa2,  // CS
-        .kind = kDifPinmuxPadKindMio,
-        .flags = kDifPinmuxPadAttrPullResistorEnable |
-                 kDifPinmuxPadAttrPullResistorUp,
-    },
-    {
-        .pad = kTopEarlgreyMuxedPadsIob7,  // SCK
-        .kind = kDifPinmuxPadKindMio,
-        .flags = kDifPinmuxPadAttrPullResistorEnable |
-                 kDifPinmuxPadAttrPullResistorUp,
-    },
-    {
-        .pad = kTopEarlgreyMuxedPadsIob2,  // SD0
-        .kind = kDifPinmuxPadKindMio,
-        .flags = kDifPinmuxPadAttrPullResistorEnable |
-                 kDifPinmuxPadAttrPullResistorUp,
-    },
-};
-
-/**
  * Screen bitmaps.
  */
 const screen_bitmap_t *kScreenBitmaps[kScreenBitmapsInCycle] = {
@@ -131,22 +107,29 @@ static status_t peripheral_init(void) {
                                kTopEarlgreyPinmuxOutselI2c0Sda));
 
   // Initialize pinmux for Screen SPI (CS, SCK, data out).
+  // CS
   CHECK_DIF_OK(dif_pinmux_output_select(&pinmux, kTopEarlgreyPinmuxMioOutIoa2,
                                         kTopEarlgreyPinmuxOutselSpiHost1Csb));
-  CHECK_DIF_OK(dif_pinmux_output_select(&pinmux, kTopEarlgreyPinmuxMioOutIob7,
-                                        kTopEarlgreyPinmuxOutselSpiHost1Sck));
-  CHECK_DIF_OK(dif_pinmux_output_select(&pinmux, kTopEarlgreyPinmuxMioOutIob2,
+  // Data
+  CHECK_DIF_OK(dif_pinmux_output_select(&pinmux, kTopEarlgreyPinmuxMioOutIoa4,
                                         kTopEarlgreyPinmuxOutselSpiHost1Sd0));
+  // CLK
+  CHECK_DIF_OK(dif_pinmux_output_select(&pinmux, kTopEarlgreyPinmuxMioOutIoa3,
+                                        kTopEarlgreyPinmuxOutselSpiHost1Sck));
 
   // Initialize pinmux for Screen GPIOs (IOC6 and 9).
-  CHECK_DIF_OK(dif_pinmux_output_select(&pinmux, kTopEarlgreyPinmuxMioOutIoc6,
-                                        kTopEarlgreyPinmuxOutselConstantOne));
-  CHECK_DIF_OK(dif_pinmux_output_select(&pinmux, kTopEarlgreyPinmuxMioOutIoc9,
+  // Data/Command
+  CHECK_DIF_OK(dif_pinmux_output_select(&pinmux, kTopEarlgreyPinmuxMioOutIoa6,
                                         kTopEarlgreyPinmuxOutselGpioGpio1));
-
-  // Pinmux pad configurations.
-  pinmux_testutils_configure_pads(&pinmux, kPinmuxPadAttrs,
-                                  ARRAYSIZE(kPinmuxPadAttrs));
+  // nRESET
+  CHECK_DIF_OK(dif_pinmux_output_select(&pinmux, kTopEarlgreyPinmuxMioOutIoc12,
+                                        kTopEarlgreyPinmuxOutselConstantOne));
+  // VCC_EN
+  CHECK_DIF_OK(dif_pinmux_output_select(&pinmux, kTopEarlgreyPinmuxMioOutIoa8,
+                                        kTopEarlgreyPinmuxOutselConstantOne));
+  // PMODEN
+  CHECK_DIF_OK(dif_pinmux_output_select(&pinmux, kTopEarlgreyPinmuxMioOutIoa7,
+                                        kTopEarlgreyPinmuxOutselConstantOne));
 
   return OK_STATUS();
 }
