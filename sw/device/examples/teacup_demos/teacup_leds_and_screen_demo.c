@@ -121,7 +121,9 @@ static status_t peripheral_init(void) {
   // Data/Command
   CHECK_DIF_OK(dif_pinmux_output_select(&pinmux, kTopEarlgreyPinmuxMioOutIoa6,
                                         kTopEarlgreyPinmuxOutselGpioGpio1));
-  // nRESET
+  // nRESET (reset the screen on each run in case the buffer got corrupted).
+  CHECK_DIF_OK(dif_pinmux_output_select(&pinmux, kTopEarlgreyPinmuxMioOutIoc12,
+                                        kTopEarlgreyPinmuxOutselConstantZero));
   CHECK_DIF_OK(dif_pinmux_output_select(&pinmux, kTopEarlgreyPinmuxMioOutIoc12,
                                         kTopEarlgreyPinmuxOutselConstantOne));
   // VCC_EN
