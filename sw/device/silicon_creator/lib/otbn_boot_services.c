@@ -4,6 +4,7 @@
 
 #include "sw/device/silicon_creator/lib/otbn_boot_services.h"
 
+#include "sw/device/lib/runtime/log.h"
 #include "sw/device/silicon_creator/lib/attestation.h"
 #include "sw/device/silicon_creator/lib/base/sec_mmio.h"
 #include "sw/device/silicon_creator/lib/dbg_print.h"
@@ -22,6 +23,8 @@ OTBN_DECLARE_SYMBOL_ADDR(boot, mode);  // Application mode.
 OTBN_DECLARE_SYMBOL_ADDR(boot, msg);   // ECDSA message digest.
 OTBN_DECLARE_SYMBOL_ADDR(boot, x);     // ECDSA public key x-coordinate.
 OTBN_DECLARE_SYMBOL_ADDR(boot, y);     // ECDSA public key y-coordinate.
+OTBN_DECLARE_SYMBOL_ADDR(boot, d0);    // ECDSA private key share 0.
+OTBN_DECLARE_SYMBOL_ADDR(boot, d1);    // ECDSA private key share 1.
 OTBN_DECLARE_SYMBOL_ADDR(boot, r);     // ECDSA signature component r.
 OTBN_DECLARE_SYMBOL_ADDR(boot, s);     // ECDSA signature component s.
 OTBN_DECLARE_SYMBOL_ADDR(boot, x_r);   // ECDSA verification result.
@@ -34,6 +37,8 @@ static const otbn_addr_t kOtbnVarBootMode = OTBN_ADDR_T_INIT(boot, mode);
 static const otbn_addr_t kOtbnVarBootMsg = OTBN_ADDR_T_INIT(boot, msg);
 static const otbn_addr_t kOtbnVarBootX = OTBN_ADDR_T_INIT(boot, x);
 static const otbn_addr_t kOtbnVarBootY = OTBN_ADDR_T_INIT(boot, y);
+static const otbn_addr_t kOtbnVarBootD0 = OTBN_ADDR_T_INIT(boot, d0);
+static const otbn_addr_t kOtbnVarBootD1 = OTBN_ADDR_T_INIT(boot, d1);
 static const otbn_addr_t kOtbnVarBootR = OTBN_ADDR_T_INIT(boot, r);
 static const otbn_addr_t kOtbnVarBootS = OTBN_ADDR_T_INIT(boot, s);
 static const otbn_addr_t kOtbnVarBootXr = OTBN_ADDR_T_INIT(boot, x_r);
@@ -186,6 +191,37 @@ rom_error_t otbn_boot_attestation_key_save(
   SEC_MMIO_WRITE_INCREMENT(kOtbnSecMmioExecute);
 
   // TODO(#20023): Check the instruction count register (see `mod_exp_otbn`).
+
+  // Retrieve the private key (for testing).
+  attestation_private_key_t private_key;
+  HARDENED_RETURN_IF_ERROR(
+      otbn_dmem_read(/*num_words=*/10, kOtbnVarBootD0, private_key.d0));
+  HARDENED_RETURN_IF_ERROR(
+      otbn_dmem_read(/*num_words=*/10, kOtbnVarBootD1, private_key.d1));
+  // clang-format off
+  LOG_INFO("Attestation Private Key D0: %08x%08x%08x%08x%08x%08x%08x%08x%08x%08x",
+  private_key.d0[9],
+  private_key.d0[8],
+  private_key.d0[7],
+  private_key.d0[6],
+  private_key.d0[5],
+  private_key.d0[4],
+  private_key.d0[3],
+  private_key.d0[2],
+  private_key.d0[1],
+  private_key.d0[0]);
+  LOG_INFO("Attestation Private Key D1: %08x%08x%08x%08x%08x%08x%08x%08x%08x%08x",
+  private_key.d1[9],
+  private_key.d1[8],
+  private_key.d1[7],
+  private_key.d1[6],
+  private_key.d1[5],
+  private_key.d1[4],
+  private_key.d1[3],
+  private_key.d1[2],
+  private_key.d1[1],
+  private_key.d1[0]);
+  // clang-format on
 
   return kErrorOk;
 }

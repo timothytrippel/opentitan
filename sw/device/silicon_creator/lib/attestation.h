@@ -111,6 +111,14 @@ typedef struct attestation_public_key {
 } attestation_public_key_t;
 
 /**
+ * Holds an attestation private key (ECDSA-P256).
+ */
+typedef struct attestation_private_key {
+  uint32_t d0[10];
+  uint32_t d1[10];
+} attestation_private_key_t;
+
+/**
  * Holds an attestation signature (ECDSA-P256).
  */
 typedef struct attestation_signature {

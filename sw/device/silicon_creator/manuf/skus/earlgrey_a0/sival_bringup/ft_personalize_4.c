@@ -12,6 +12,7 @@
 #include "sw/device/lib/testing/test_framework/ottf_test_config.h"
 #include "sw/device/lib/testing/test_framework/status.h"
 #include "sw/device/lib/testing/test_framework/ujson_ottf.h"
+#include "sw/device/silicon_creator/lib/attestation.h"
 #include "sw/device/silicon_creator/lib/attestation_key_diversifiers.h"
 #include "sw/device/silicon_creator/lib/base/boot_measurements.h"
 #include "sw/device/silicon_creator/lib/cert/tpm_cek.h"  // Generated.
@@ -232,6 +233,9 @@ static status_t personalize(ujson_t *uj) {
 
   // Generate TPM EK keys and TBS.
   TRY(dice_attestation_keygen(kDiceKeyTpmEk, &tpm_pubkey_id, &curr_pubkey));
+  TRY(otbn_boot_attestation_key_save(kTpmEkAttestationKeySeed,
+                                     kOtbnBootAttestationKeyTypeTpm,
+                                     kTpmEkKeymgrDiversifier));
   TRY(dice_tpm_ek_tbs_cert_build(&tpm_key_ids, &curr_pubkey,
                                  tpm_certs.tpm_ek_tbs_certificate,
                                  &tpm_certs.tpm_ek_tbs_certificate_size));
