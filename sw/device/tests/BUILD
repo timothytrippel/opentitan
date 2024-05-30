@@ -6019,3 +6019,22 @@ opentitan_test(
         "//sw/device/lib/testing/test_framework:ottf_main",
     ],
 )
+
+opentitan_test(
+    name = "regen_tpm_keys_at_owner_stage",
+    srcs = ["regen_tpm_keys_at_owner_stage.c"],
+    exec_env = {
+        "//hw/top_earlgrey:fpga_cw310_sival_rom_ext": None,
+        "//hw/top_earlgrey:silicon_owner_prodc_rom_ext": None,
+    },
+    deps = [
+        "//hw/top_earlgrey/sw/autogen:top_earlgrey",
+        "//sw/device/lib/runtime:log",
+        "//sw/device/lib/testing/test_framework:check",
+        "//sw/device/lib/testing/test_framework:ottf_main",
+        "//sw/device/silicon_creator/lib:attestation_key_diversifiers",
+        "//sw/device/silicon_creator/lib:dice",
+        "//sw/device/silicon_creator/lib:error",
+        "//sw/device/silicon_creator/lib:otbn_boot_services",
+    ],
+)
