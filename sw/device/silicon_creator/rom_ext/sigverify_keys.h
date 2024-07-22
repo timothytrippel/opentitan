@@ -9,6 +9,7 @@
 
 #include "sw/device/silicon_creator/lib/error.h"
 #include "sw/device/silicon_creator/lib/sigverify/rsa_key.h"
+#include "sw/device/silicon_creator/lib/sigverify/spx_key.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -98,6 +99,11 @@ OT_WARN_UNUSED_RESULT
 rom_error_t sigverify_rsa_key_get(uint32_t key_id,
                                   const sigverify_rsa_key_t **key);
 
+extern const sigverify_spx_key_t kSigverifySpxKey;
+
+OT_WARN_UNUSED_RESULT
+rom_error_t sigverify_spx_key_get(uint32_t key_id,
+                                  const sigverify_spx_key_t **key);
 #ifdef __cplusplus
 }  // extern "C"
 #endif  // __cplusplus

@@ -68,3 +68,13 @@ rom_error_t sigverify_rsa_key_get(uint32_t key_id,
 
   return kErrorSigverifyBadKey;
 }
+
+rom_error_t sigverify_spx_key_get(uint32_t key_id,
+                                  const sigverify_spx_key_t **key) {
+  rom_error_t rv = kErrorSigverifyBadKey;
+  if (key_id == sigverify_spx_key_id_get(&kSigverifySpxKey)) {
+    *key = &kSigverifySpxKey;
+    rv = kErrorOk;
+  }
+  return rv;
+}
