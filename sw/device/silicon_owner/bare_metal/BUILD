@@ -5,7 +5,12 @@
 load("//rules:const.bzl", "CONST", "hex")
 load("//rules:linker.bzl", "ld_library")
 load("//rules:manifest.bzl", "manifest")
-load("//rules/opentitan:defs.bzl", "cw310_params", "fpga_params", "opentitan_binary", "opentitan_test")
+load("//rules/opentitan:defs.bzl", "fpga_params", "opentitan_binary", "opentitan_test")
+load(
+    "//rules:otp.bzl",
+    "STD_OTP_OVERLAYS",
+    "otp_image",
+)
 
 package(default_visibility = ["//visibility:public"])
 
@@ -147,4 +152,49 @@ opentitan_test(
     deps = [
         "//sw/device/lib/testing/test_framework:ottf_main",
     ],
+)
+
+################################################################################
+# Owner SPX+ Sigverify Test
+################################################################################
+
+otp_image(
+    name = "otp_img_secret2_locked_dev_spx_enabled",
+    src = "//hw/ip/otp_ctrl/data:otp_json_dev",
+    overlays = STD_OTP_OVERLAYS + [
+        "//sw/device/silicon_creator/rom_ext/e2e:otp_json_secret2_locked",
+        "//sw/device/silicon_creator/rom/e2e/sigverify_spx:otp_json_sigverify_spx_enabled_true",
+    ],
+)
+
+opentitan_binary(
+    name = "bare_metal_slot_a_spx_signed",
+    testonly = True,
+    srcs = ["bare_metal_start.S"],
+    exec_env = [
+        "//hw/top_earlgrey:fpga_cw310_rom_ext",
+    ],
+    linker_script = ":ld_slot_a",
+    manifest = ":manifest",
+    rsa_key = {"//sw/device/silicon_creator/rom_ext/keys/fake:rom_ext_prod_private_key_0": "prod_key_0"},
+    spx_key = {"//sw/device/silicon_creator/rom_ext/keys/fake:rom_ext_test_spx_private_key_0": "test_key_0"},
+    deps = [
+        ":bare_metal",
+        "//sw/device/lib/crt",
+        "//sw/device/silicon_creator/lib:manifest_def",
+    ],
+)
+
+opentitan_test(
+    name = "owner_bare_metal_spx",
+    exec_env = {
+        "//hw/top_earlgrey:fpga_cw310_rom_ext": None,
+    },
+    fpga = fpga_params(
+        binaries = {
+            ":bare_metal_slot_a_spx_signed": "firmware",
+        },
+        exit_success = BOOT_SUCCESS_MSG,
+        otp = ":otp_img_secret2_locked_dev_spx_enabled",
+    ),
 )

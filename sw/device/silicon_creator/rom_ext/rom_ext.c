@@ -264,6 +264,8 @@ static rom_error_t rom_ext_verify(const manifest_t *manifest,
   memcpy(&boot_measurements.bl0, &act_digest, sizeof(boot_measurements.bl0));
 
   uint32_t flash_exec = 0;
+  /*return sigverify_rsa_verify(&manifest->rsa_signature, key,*/
+  /*&act_digest, lc_state, &flash_exec);*/
   RETURN_IF_ERROR(sigverify_rsa_verify(&manifest->rsa_signature, key,
                                        &act_digest, lc_state, &flash_exec));
   const manifest_ext_spx_key_t *ext_spx_key;

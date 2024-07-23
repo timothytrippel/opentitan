@@ -62,3 +62,8 @@ filegroup(
     name = "rom_ext_prod_private_key_0",
     srcs = ["rom_ext_prod_key_0_rsa_3072_exp_f4.der"],
 )
+
+filegroup(
+    name = "rom_ext_test_spx_private_key_0",
+    srcs = ["rom_ext_test_spx_0_key.pem"],
+)
