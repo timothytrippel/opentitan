@@ -6,6 +6,7 @@
 
 #include "sw/device/lib/base/macros.h"
 #include "sw/device/lib/base/memory.h"
+#include "sw/device/silicon_creator/lib/dbg_print.h"
 #include "sw/device/silicon_creator/lib/drivers/otp.h"
 #include "sw/device/silicon_creator/lib/sigverify/sphincsplus/verify.h"
 
@@ -97,6 +98,7 @@ rom_error_t sigverify_spx_verify(
   uint32_t spx_en = launder32(sigverify_spx_verify_enabled(lc_state));
   rom_error_t error = kErrorSigverifyBadSpxSignature;
   if (launder32(spx_en) != kSigverifySpxDisabledOtp) {
+    dbg_printf("SPX is enabled.\r\n");
     sigverify_spx_root_t expected_root;
     spx_public_key_root(key->data, expected_root.data);
     sigverify_spx_root_t actual_root;
@@ -143,6 +145,7 @@ rom_error_t sigverify_spx_verify(
     error = sigverify_spx_success_to_ok(flash_exec_spx);
     *flash_exec ^= flash_exec_spx;
   } else {
+    dbg_printf("SPX is disabled.\r\n");
     HARDENED_CHECK_EQ(spx_en, kSigverifySpxDisabledOtp);
     *flash_exec ^= spx_en;
     uint32_t otp_val = sigverify_spx_verify_enabled(lc_state);
