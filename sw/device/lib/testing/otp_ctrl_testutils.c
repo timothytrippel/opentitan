@@ -54,7 +54,9 @@ status_t otp_ctrl_testutils_dai_access_error_check(
 }
 
 status_t otp_ctrl_testutils_wait_for_dai(const dif_otp_ctrl_t *otp_ctrl) {
+  LOG_INFO("Waiting for DAI to become ready ...");
   IBEX_TRY_SPIN_FOR(dai_finished(otp_ctrl), kOtpDaiTimeoutUs);
+  LOG_INFO("DAI ready.");
   return OK_STATUS();
 }
 
