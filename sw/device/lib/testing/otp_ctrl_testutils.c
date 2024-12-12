@@ -5,6 +5,7 @@
 #include "sw/device/lib/testing/otp_ctrl_testutils.h"
 
 #include "sw/device/lib/dif/dif_otp_ctrl.h"
+#include "sw/device/lib/runtime/hart.h"
 #include "sw/device/lib/runtime/ibex.h"
 #include "sw/device/lib/runtime/log.h"
 #include "sw/device/lib/testing/test_framework/check.h"
@@ -173,6 +174,9 @@ status_t otp_ctrl_testutils_dai_write32(const dif_otp_ctrl_t *otp,
     if (read_data != buffer[i]) {
       return INTERNAL();
     }
+
+    // Wait for charge pump to recover.
+    busy_spin_micros(10000);  // 10ms
   }
   return OK_STATUS();
 }
@@ -194,6 +198,9 @@ status_t otp_ctrl_testutils_dai_write64(const dif_otp_ctrl_t *otp,
     if (read_data != buffer[i]) {
       return INTERNAL();
     }
+
+    // Wait for charge pump to recover.
+    busy_spin_micros(10000);  // 10ms
   }
   return OK_STATUS();
 }
