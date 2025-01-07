@@ -4,6 +4,7 @@
 
 """Rules to build OpenTitan for the RISC-V target"""
 
+load("@bazel_skylib//lib:sets.bzl", "sets")
 load(
     "@lowrisc_opentitan//rules:rv.bzl",
     _OPENTITAN_CPU = "OPENTITAN_CPU",
@@ -14,6 +15,10 @@ load(
     "@lowrisc_opentitan//rules/opentitan:cc.bzl",
     _opentitan_binary = "opentitan_binary",
     _opentitan_test = "opentitan_test",
+)
+load(
+    "@lowrisc_opentitan//rules/opentitan:ci.bzl",
+    "ci_orchestrator",
 )
 load(
     "@lowrisc_opentitan//rules/opentitan:fpga.bzl",
@@ -47,14 +52,9 @@ load(
     _verilator_params = "verilator_params",
 )
 load(
-    "@lowrisc_opentitan//rules/opentitan:ci.bzl",
-    "ci_orchestrator",
-)
-load(
     "@provisioning_exts//:cfg.bzl",
     "EXT_EXEC_ENV_SILICON_ROM_EXT",
 )
-load("@bazel_skylib//lib:sets.bzl", "sets")
 
 # The following definition is used to clear the key set in the signing
 # configuration for execution environments (exec_env) and opentitan_test
@@ -104,7 +104,7 @@ EARLGREY_TEST_ENVS = {
 
 # The default set of test environments for Earlgrey.
 EARLGREY_SILICON_OWNER_ROM_EXT_ENVS = {
-    "//hw/top_earlgrey:silicon_owner_sival_rom_ext": None,
+    "//hw/top_earlgrey:silicon_owner_sival_rom_ext": "silicon",
 } | EXT_EXEC_ENV_SILICON_ROM_EXT
 
 # All CW340 test environments for Earlgrey.

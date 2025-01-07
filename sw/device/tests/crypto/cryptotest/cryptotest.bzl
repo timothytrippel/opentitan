@@ -5,6 +5,10 @@
 """Cryptotest test case definition"""
 
 load(
+    "@provisioning_exts//:cfg.bzl",
+    "EXT_EXEC_ENV_SILICON_ROM_EXT",
+)
+load(
     "//rules/opentitan:defs.bzl",
     "fpga_params",
     "opentitan_test",
@@ -23,7 +27,7 @@ CRYPTOTEST_EXEC_ENVS = {
     "//hw/top_earlgrey:fpga_cw340_test_rom": "fpga_cw340",
     "//hw/top_earlgrey:fpga_cw340_sival_rom_ext": "fpga_cw340",
     "//hw/top_earlgrey:silicon_owner_sival_rom_ext": "silicon",
-}
+} | EXT_EXEC_ENV_SILICON_ROM_EXT
 
 FIRMWARE_DEPS = [
     "//sw/device/tests/crypto/cryptotest/firmware:aes",
