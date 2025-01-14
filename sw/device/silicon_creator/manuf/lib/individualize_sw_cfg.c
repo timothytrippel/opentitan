@@ -9,6 +9,7 @@
 #include "sw/device/lib/crypto/include/hash.h"
 #include "sw/device/lib/dif/dif_flash_ctrl.h"
 #include "sw/device/lib/dif/dif_otp_ctrl.h"
+#include "sw/device/lib/runtime/hart.h"
 #include "sw/device/lib/runtime/log.h"
 #include "sw/device/lib/testing/flash_ctrl_testutils.h"
 #include "sw/device/lib/testing/otp_ctrl_testutils.h"
@@ -335,7 +336,10 @@ status_t manuf_individualize_device_rot_creator_auth_codesign(
                     kOtpKvRotCreatorAuthCodesign,
                     kOtpKvRotCreatorAuthCodesignSize));
   LOG_INFO("Locking RotCreatorAuthCodesign partition.");
+  // DEBUG: Add delay before locking the partition.
+  busy_spin_micros(20000);  // 20ms
   TRY(lock_otp_partition(otp_ctrl, kDifOtpCtrlPartitionRotCreatorAuthCodesign));
+  busy_spin_micros(20000);  // 20ms
   LOG_INFO("Done.");
   return OK_STATUS();
 }
