@@ -25,6 +25,7 @@ const uint16_t kOtpDaiTimeoutUs = 10000;
 static bool dai_finished(const dif_otp_ctrl_t *otp_ctrl) {
   dif_otp_ctrl_status_t status;
   dif_result_t res = dif_otp_ctrl_get_status(otp_ctrl, &status);
+  LOG_INFO("        DAI Status Codes: 0x%x", status.codes);
   return res == kDifOk &&
          bitfield_bit32_read(status.codes, kDifOtpCtrlStatusCodeDaiIdle);
 }
@@ -68,9 +69,13 @@ status_t otp_ctrl_testutils_lock_partition(const dif_otp_ctrl_t *otp,
 status_t otp_ctrl_testutils_dai_read32(const dif_otp_ctrl_t *otp,
                                        dif_otp_ctrl_partition_t partition,
                                        uint32_t address, uint32_t *result) {
+  LOG_INFO("    Read - waiting for DAI");
   TRY(otp_ctrl_testutils_wait_for_dai(otp));
+  LOG_INFO("    Read - read start (addr = %x)", address);
   TRY(dif_otp_ctrl_dai_read_start(otp, partition, address));
+  LOG_INFO("    Read - waiting for DAI");
   TRY(otp_ctrl_testutils_wait_for_dai(otp));
+  LOG_INFO("    Read - read end");
   TRY(dif_otp_ctrl_dai_read32_end(otp, result));
   return OK_STATUS();
 }
@@ -152,13 +157,17 @@ status_t otp_ctrl_testutils_dai_write32(const dif_otp_ctrl_t *otp,
   for (uint32_t addr = start_address, i = 0; addr < stop_address;
        addr += sizeof(uint32_t), ++i) {
     uint32_t read_data;
+    LOG_INFO("HERE-1 - %d", i);
 
     if (check_before_write) {
+      LOG_INFO("Before otp_ctrl_testutils_dai_read32 (1)");
       TRY(otp_ctrl_testutils_dai_read32(otp, partition, addr, &read_data));
       if (read_data == buffer[i]) {
+        LOG_INFO("HERE-2 - %d", i);
         continue;
       }
       if (read_data != 0) {
+        LOG_INFO("HERE-3 - %d", i);
         if ((read_data & buffer[i]) ^ read_data) {
           LOG_ERROR(
               "OTP program error (before programming attempt): %d addr[0x%x] "
@@ -169,11 +178,15 @@ status_t otp_ctrl_testutils_dai_write32(const dif_otp_ctrl_t *otp,
       }
     }
 
+    LOG_INFO("Before otp_ctrl_testutils_wait_for_dai (1)");
     TRY(otp_ctrl_testutils_wait_for_dai(otp));
+    LOG_INFO("Before dif_otp_ctrl_dai_program32");
     TRY(dif_otp_ctrl_dai_program32(otp, partition, addr, buffer[i]));
+    LOG_INFO("Before otp_ctrl_testutils_wait_for_dai (2)");
     TRY(otp_ctrl_testutils_wait_for_dai(otp));
+    LOG_INFO("Before otp_ctrl_dai_write_error_check");
     TRY(otp_ctrl_dai_write_error_check(otp));
-
+    LOG_INFO("Before otp_ctrl_testutils_dai_read32 (2)");
     TRY(otp_ctrl_testutils_dai_read32(otp, partition, addr, &read_data));
     if (read_data != buffer[i]) {
       LOG_ERROR(
