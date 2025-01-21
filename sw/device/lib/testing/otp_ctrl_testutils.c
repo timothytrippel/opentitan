@@ -152,15 +152,20 @@ status_t otp_ctrl_testutils_dai_write32(const dif_otp_ctrl_t *otp,
   for (uint32_t addr = start_address, i = 0; addr < stop_address;
        addr += sizeof(uint32_t), ++i) {
     uint32_t read_data;
+
     if (check_before_write) {
       TRY(otp_ctrl_testutils_dai_read32(otp, partition, addr, &read_data));
       if (read_data == buffer[i]) {
         continue;
       }
       if (read_data != 0) {
-        LOG_ERROR("OTP partition: %d addr[0x%x] got: 0x%08x, expected: 0x%08x",
-                  partition, addr, read_data, buffer[i]);
-        return INTERNAL();
+        if ((read_data & buffer[i]) ^ read_data) {
+          LOG_ERROR(
+              "OTP program error (before programming attempt): %d addr[0x%x] "
+              "got: 0x%08x, expected: 0x%08x",
+              partition, addr, read_data, buffer[i]);
+          return INTERNAL();
+        }
       }
     }
 
@@ -171,6 +176,10 @@ status_t otp_ctrl_testutils_dai_write32(const dif_otp_ctrl_t *otp,
 
     TRY(otp_ctrl_testutils_dai_read32(otp, partition, addr, &read_data));
     if (read_data != buffer[i]) {
+      LOG_ERROR(
+          "OTP program error (after programming attempt): %d addr[0x%x] "
+          "got: 0x%08x, expected: 0x%08x",
+          partition, addr, read_data, buffer[i]);
       return INTERNAL();
     }
   }
