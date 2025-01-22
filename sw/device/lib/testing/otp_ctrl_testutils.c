@@ -153,9 +153,9 @@ status_t otp_ctrl_testutils_dai_write32(const dif_otp_ctrl_t *otp,
        partition == kDifOtpCtrlPartitionOwnerSwCfg ||
        partition == kDifOtpCtrlPartitionRotCreatorAuthCodesign ||
        partition == kDifOtpCtrlPartitionRotCreatorAuthState);
-  uint32_t stop_address = start_address + (len * sizeof(uint32_t));
-  for (uint32_t addr = start_address, i = 0; addr < stop_address;
-       addr += sizeof(uint32_t), ++i) {
+  uint32_t last_address = start_address + (len - 1) * sizeof(uint32_t);
+  int i = (int)len - 1;
+  for (uint32_t addr = last_address; i >= 0; addr -= sizeof(uint32_t), --i) {
     uint32_t read_data;
     LOG_INFO("HERE-1 - %d", i);
 
