@@ -169,6 +169,7 @@ opentitan_test(
             "//sw/device/lib/dif:flash_ctrl",
             "//sw/device/lib/dif:otp_ctrl",
             "//sw/device/lib/dif:pinmux",
+            "//sw/device/lib/dif:pwm",
             "//sw/device/lib/runtime:hart",
             "//sw/device/lib/runtime:ibex",
             "//sw/device/lib/runtime:log",

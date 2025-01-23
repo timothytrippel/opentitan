@@ -10,6 +10,7 @@
 #include "sw/device/lib/dif/dif_clkmgr.h"
 #include "sw/device/lib/dif/dif_flash_ctrl.h"
 #include "sw/device/lib/dif/dif_otp_ctrl.h"
+#include "sw/device/lib/dif/dif_pwm.h"
 #include "sw/device/lib/runtime/hart.h"
 #include "sw/device/lib/runtime/ibex.h"
 #include "sw/device/lib/runtime/log.h"
@@ -41,6 +42,7 @@ static dif_clkmgr_t clkmgr;
 static dif_flash_ctrl_state_t flash_ctrl_state;
 static dif_otp_ctrl_t otp_ctrl;
 static dif_pinmux_t pinmux;
+static dif_pwm_t pwm;
 
 static manuf_ft_individualize_data_t in_data;
 static uint32_t cp_device_id[kFlashInfoFieldCpDeviceIdSizeIn32BitWords];
@@ -78,6 +80,8 @@ static status_t peripheral_handles_init(void) {
       mmio_region_from_addr(TOP_EARLGREY_OTP_CTRL_CORE_BASE_ADDR), &otp_ctrl));
   TRY(dif_pinmux_init(mmio_region_from_addr(TOP_EARLGREY_PINMUX_AON_BASE_ADDR),
                       &pinmux));
+  TRY(dif_pwm_init(mmio_region_from_addr(TOP_EARLGREY_PWM_AON_BASE_ADDR),
+                   &pwm));
   return OK_STATUS();
 }
 
@@ -180,6 +184,35 @@ static status_t configure_all_alerts(void) {
   return OK_STATUS();
 }
 
+static status_t config_pwm_for_debug(void) {
+  enum {
+    kPwmClockFreqHz = 48,
+    kDutyCycle = 50,
+    kDutyCycleResolution = 5,
+    kBeatsPerCycle = 1 << (kDutyCycleResolution + 1),  // 2 ^ (DC_RESN + 1)
+  };
+  const dif_pwm_config_t kPwmConfig = {
+      .beats_per_pulse_cycle = kBeatsPerCycle,
+      .clock_divisor = ((uint32_t)kClockFreqAonHz / (kBeatsPerCycle * 48)) - 1};
+  const dif_pwm_channel_config_t kPwmChannelConfig = {
+      .duty_cycle_a =
+          (uint16_t)(kPwmConfig.beats_per_pulse_cycle * kDutyCycle / 100),
+      .duty_cycle_b = 0,
+      .phase_delay = 0,
+      .mode = kDifPwmModeFirmware,
+      .polarity = kDifPwmPolarityActiveHigh,
+      .blink_parameter_x = 0,
+      .blink_parameter_y = 0,
+  };
+  TRY(dif_pinmux_output_select(&pinmux, kTopEarlgreyPinmuxMioOutIoa6,
+                               kTopEarlgreyPinmuxOutselPwmAonPwm0));
+  CHECK_DIF_OK(dif_pwm_configure(&pwm, kPwmConfig));
+  TRY(dif_pwm_configure_channel(&pwm, kDifPwmChannel0, kPwmChannelConfig));
+  TRY(dif_pwm_phase_cntr_set_enabled(&pwm, kDifToggleEnabled));
+  TRY(dif_pwm_channel_set_enabled(&pwm, kDifPwmChannel0, kDifToggleEnabled));
+  return OK_STATUS();
+}
+
 /**
  * Provision OTP {CreatorSw,OwnerSw,Hw}Cfg and RotCreatorAuth{Codesign,State}
  * partitions.
@@ -214,6 +247,9 @@ static status_t provision(ujson_t *uj) {
           .integrity_period_mask = 0,    // Disable integrity checks.
           .consistency_period_mask = 0,  // Disable consistency checks.
       }));
+
+  // Enable PWM channel 0 on IOA6 for debugging purposes.
+  TRY(config_pwm_for_debug());
 
   // Perform OTP writes.
   LOG_INFO("Writing HW_CFG* OTP partitions ...");
