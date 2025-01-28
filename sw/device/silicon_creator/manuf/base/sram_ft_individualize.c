@@ -52,6 +52,9 @@ static const int kSettleDelayMicros = 200;
 // Number of NMIs seen as a result of alerts firing.
 static size_t alert_nmi_count = 0;
 
+// Whether or not to insert delays in OTP operation hooks.
+static bool insert_delays_in_otp_ops = false;
+
 // OTP programming indicator GPIOs.
 static const dif_gpio_pin_t kGpioPinOtpDaiWaitHook = 0;
 static const dif_gpio_pin_t kGpioPinOtpDaiWriteHook = 1;
@@ -164,25 +167,38 @@ static status_t configure_gpio_indicators(void) {
   return OK_STATUS();
 }
 
+// To deal with OTP programming failures, we add delays of 20ms between
+// programming operations when requested by the caller.
+static void insert_delay(void) {
+  const uint32_t kDelayMicros = 20000;  // 20ms
+  if (insert_delays_in_otp_ops) {
+    busy_spin_micros(kDelayMicros);
+  }
+}
+
 status_t otp_ctrl_testutils_wait_for_dai_pre_hook(
     const dif_otp_ctrl_t *otp_ctrl) {
+  insert_delay();
   TRY(dif_gpio_write(&gpio, kGpioPinOtpDaiWaitHook, true));
   return OK_STATUS();
 }
 
 status_t otp_ctrl_testutils_wait_for_dai_post_hook(
     const dif_otp_ctrl_t *otp_ctrl) {
+  // No delays post.
   TRY(dif_gpio_write(&gpio, kGpioPinOtpDaiWaitHook, false));
   return OK_STATUS();
 }
 
 status_t otp_ctrl_testutils_dai_write_pre_hook(const dif_otp_ctrl_t *otp_ctrl) {
+  insert_delay();
   TRY(dif_gpio_write(&gpio, kGpioPinOtpDaiWriteHook, true));
   return OK_STATUS();
 }
 
 status_t otp_ctrl_testutils_dai_write_post_hook(
     const dif_otp_ctrl_t *otp_ctrl) {
+  // No delays post.
   TRY(dif_gpio_write(&gpio, kGpioPinOtpDaiWriteHook, false));
   return OK_STATUS();
 }
@@ -193,18 +209,21 @@ status_t otp_ctrl_testutils_dai_read_pre_hook(const dif_otp_ctrl_t *otp_ctrl) {
 }
 
 status_t otp_ctrl_testutils_dai_read_post_hook(const dif_otp_ctrl_t *otp_ctrl) {
+  // No delays post.
   TRY(dif_gpio_write(&gpio, kGpioPinOtpDaiReadHook, false));
   return OK_STATUS();
 }
 
 status_t otp_ctrl_testutils_dai_write_pre_error_check_hook(
     const dif_otp_ctrl_t *otp_ctrl) {
+  insert_delay();
   TRY(dif_gpio_write(&gpio, kGpioPinOtpDaiErrorCheckHook, true));
   return OK_STATUS();
 }
 
 status_t otp_ctrl_testutils_dai_write_post_error_check_hook(
     const dif_otp_ctrl_t *otp_ctrl) {
+  // No delays post.
   TRY(dif_gpio_write(&gpio, kGpioPinOtpDaiErrorCheckHook, false));
   return OK_STATUS();
 }
@@ -253,8 +272,12 @@ static status_t provision(ujson_t *uj) {
                                         kFlashInfoPage0Permissions,
                                         in_data.ft_device_id));
 
+  // Only enable OTP operation delays when programming the root keys partition.
   LOG_INFO("Writing ROT_CREATOR_AUTH_CODESIGN OTP partition ...");
+  // Whether or not to insert delays in OTP operation hooks.
+  insert_delays_in_otp_ops = true;
   TRY(manuf_individualize_device_rot_creator_auth_codesign(&otp_ctrl));
+  insert_delays_in_otp_ops = false;
 
   LOG_INFO("Writing ROT_CREATOR_AUTH_STATE OTP partition ...");
   TRY(manuf_individualize_device_rot_creator_auth_state(&otp_ctrl));
