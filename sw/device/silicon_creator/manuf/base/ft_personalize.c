@@ -36,6 +36,7 @@
 #include "sw/device/silicon_creator/lib/cert/cert.h"
 #include "sw/device/silicon_creator/lib/cert/dice.h"
 #include "sw/device/silicon_creator/lib/cert/uds.h"  // Generated.
+#include "sw/device/silicon_creator/lib/dbg_print.h"
 #include "sw/device/silicon_creator/lib/drivers/flash_ctrl.h"
 #include "sw/device/silicon_creator/lib/drivers/hmac.h"
 #include "sw/device/silicon_creator/lib/drivers/keymgr.h"
@@ -533,10 +534,12 @@ static status_t personalize_gen_dice_certificates(ujson_t *uj) {
   memcpy(uds_endorsement_key_id.digest, certgen_inputs.dice_auth_key_key_id,
          kCertKeyIdSizeInBytes);
 
+  dbg_printf("Initializing entropy complex.\r\n");
   // Initialize entropy complex / KMAC for key manager operations.
   TRY(entropy_complex_init());
   TRY(kmac_keymgr_configure());
 
+  dbg_printf("Cranking keymgr to CreatorRootKey.\r\n");
   // Advance keymgr to CreatorRootKey state.
   TRY(sc_keymgr_state_check(kScKeymgrStateReset));
   sc_keymgr_advance_state();
@@ -597,6 +600,7 @@ static status_t personalize_gen_dice_certificates(ujson_t *uj) {
   ownership_seal_init();
 
   // Generate CDI_0 keys and cert.
+  dbg_printf("Cranking keymgr to OwnerIntKey.\r\n");
   curr_cert_size = kCdi0MaxCertSizeBytes;
   compute_keymgr_owner_int_binding();
   TRY(sc_keymgr_owner_int_advance(&sealing_binding_value,
@@ -614,6 +618,7 @@ static status_t personalize_gen_dice_certificates(ujson_t *uj) {
                                         curr_cert_size, &perso_blob_to_host));
 
   // Generate CDI_1 keys and cert.
+  dbg_printf("Cranking keymgr to OwnerKey.\r\n");
   curr_cert_size = kCdi1MaxCertSizeBytes;
   compute_keymgr_owner_binding();
   TRY(sc_keymgr_owner_advance(&sealing_binding_value,
@@ -1094,11 +1099,14 @@ static status_t configure_ate_gpio_indicators(void) {
 static status_t provision(ujson_t *uj) {
   // Provision OTP, flash secrets, certs, and install the first owner.
   TRY(lc_ctrl_testutils_operational_state_check(&lc_ctrl));
+  dbg_printf("Writing OTP and flash secrets.\r\n");
   TRY(personalize_otp_and_flash_secrets(uj));
 
+  dbg_printf("Generating keys and certificates.\r\n");
   TRY(personalize_gen_dice_certificates(uj));
   owner_config_t owner_config;
   owner_application_keyring_t owner_keyring = {0};
+  dbg_printf("Installing the owner.\r\n");
   TRY(install_owner(&owner_config, &owner_keyring));
 
   // Erase all of the owner-reserved INFO pages before performing any
@@ -1119,16 +1127,21 @@ static status_t provision(ujson_t *uj) {
           &otp_rot_creator_auth_codesign_measurement,
       .otp_rot_creator_auth_state_measurement =
           &otp_rot_creator_auth_state_measurement};
+  dbg_printf("Running pre endorsement extension.\r\n");
   TRY(personalize_extension_pre_cert_endorse(&pre_endorse));
+  dbg_printf("Computing WAS HMAC.\r\n");
   TRY(compute_tbs_was_hmac(pre_endorse.perso_blob_to_host));
 
   // Endorse TBS certs and install in flash.
+  dbg_printf("Sending certs for endorsement.\r\n");
   TRY(personalize_endorse_certificates(uj));
+  dbg_printf("Hashing all received certs.\r\n");
   TRY(hash_all_certs());
   personalize_extension_post_endorse_t post_endorse = {
       .uj = uj,
       .perso_blob_from_host = &perso_blob_from_host,
       .cert_flash_layout = cert_flash_layout};
+  dbg_printf("Running post endorsement extension.\r\n");
   TRY(personalize_extension_post_cert_endorse(&post_endorse));
 
   // Check the hash of all perso objects with the host to confirm integrity of
@@ -1136,9 +1149,11 @@ static status_t provision(ujson_t *uj) {
   serdes_sha256_hash_t hash;
   hmac_sha256_process();
   hmac_sha256_final((hmac_digest_t *)&hash);
+  dbg_printf("Sending final cert hash to host.\r\n");
   TRY(send_final_hash(uj, &hash));
 
   // Complete any remaining OTP programming.
+  dbg_printf("Finalizing OTP writes.\r\n");
   TRY(finalize_otp_partitions());
 
   return OK_STATUS();
