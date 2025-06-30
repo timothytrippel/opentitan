@@ -13,6 +13,7 @@
 #include "sw/device/lib/dif/dif_otp_ctrl.h"
 #include "sw/device/lib/dif/dif_pinmux.h"
 #include "sw/device/lib/dif/dif_rstmgr.h"
+#include "sw/device/lib/runtime/hart.h"
 #include "sw/device/lib/runtime/log.h"
 #include "sw/device/lib/runtime/print.h"
 #include "sw/device/lib/testing/flash_ctrl_testutils.h"
@@ -37,6 +38,7 @@
 #include "sw/device/silicon_creator/lib/cert/dice.h"
 #include "sw/device/silicon_creator/lib/cert/dice_chain.h"
 #include "sw/device/silicon_creator/lib/cert/uds.h"  // Generated.
+#include "sw/device/silicon_creator/lib/dbg_print.h"
 #include "sw/device/silicon_creator/lib/drivers/flash_ctrl.h"
 #include "sw/device/silicon_creator/lib/drivers/hmac.h"
 #include "sw/device/silicon_creator/lib/drivers/keymgr.h"
@@ -861,6 +863,9 @@ static status_t write_cert_to_dice_page(const cert_flash_info_layout_t *layout,
                                         uint32_t page_offset,
                                         uint32_t cert_write_size_bytes) {
   base_printf("Importing %s cert to %s ...\n", block->name, layout->group_name);
+  dbg_printf("Importing %s cert to %s ...\r\n", block->name,
+             layout->group_name);
+  busy_spin_micros(5 * 1000);
   if ((page_offset + cert_write_size_bytes) > sizeof(dice_page.data)) {
     LOG_ERROR("%s %s certificate did not fit into the info page.",
               layout->group_name, block->name);
@@ -879,6 +884,8 @@ static status_t write_cert_to_dice_page(const cert_flash_info_layout_t *layout,
 static status_t write_digest_to_dice_page(
     const cert_flash_info_layout_t *layout, uint32_t page_offset) {
   base_printf("Digesting %s page ...\n", layout->group_name);
+  dbg_printf("Digesting %s page ...\r\n", layout->group_name);
+  busy_spin_micros(5 * 1000);
 
   hmac_sha256(dice_page.data, sizeof(dice_page.data), &dice_page.digest);
 
@@ -903,6 +910,8 @@ static status_t personalize_endorse_certificates(ujson_t *uj) {
   TRY(dif_gpio_write(&gpio, kGpioPinSpiConsoleRxReady, true));
   TRY(ujson_deserialize_perso_blob_t(uj, &perso_blob_from_host));
   TRY(dif_gpio_write(&gpio, kGpioPinSpiConsoleRxReady, false));
+  dbg_printf("Received endorsed certs.\r\n");
+  busy_spin_micros(5 * 1000);
 
   /*****************************************************************************
    * Rearrange certificates to prepare for writing to flash.
@@ -933,8 +942,12 @@ static status_t personalize_endorse_certificates(ujson_t *uj) {
   size_t cert_offsets[3] = {uds_offset, cdi_0_offset, cdi_1_offset};
   size_t cert_offsets_count = 3;
   if (kDiceCertFormat == kDiceCertFormatX509TcbInfo) {
+    dbg_printf("Extracting UDS certs from perso blob ...\r\n");
+    busy_spin_micros(5 * 1000);
     // Exract the UDS cert perso LTV object.
     TRY(extract_next_cert(&next_cert, &free_room));
+    dbg_printf("Done.\r\n");
+    busy_spin_micros(5 * 1000);
     // Extract the two CDI cert perso LTV objects which were endorsed on-device
     // and sent to the host.
     cert_offsets[0] = cert_offsets[1];
@@ -957,8 +970,12 @@ static status_t personalize_endorse_certificates(ujson_t *uj) {
   }
 
   // Extract the remaining cert perso LTV objects received from the host.
+  dbg_printf("Extracting SKU-specific SPM-endorsed certs ...\r\n");
+  busy_spin_micros(5 * 1000);
   while (perso_blob_from_host.num_objs)
     TRY(extract_next_cert(&next_cert, &free_room));
+  dbg_printf("Done.\r\n");
+  busy_spin_micros(5 * 1000);
 
   /*****************************************************************************
    * Save Certificates to Flash.
@@ -967,7 +984,11 @@ static status_t personalize_endorse_certificates(ujson_t *uj) {
   // a perso LTV object. Reset the `next_cert` pointer and `free_room` size.
   next_cert = all_certs;
   free_room = sizeof(all_certs);
+  dbg_printf("Writing certs to flash info pages ...\r\n");
+  busy_spin_micros(5 * 1000);
   for (size_t i = 0; i < ARRAYSIZE(cert_flash_layout); i++) {
+    dbg_printf("Writing cert flash info page %d...\r\n", i);
+    busy_spin_micros(5 * 1000);
     const cert_flash_info_layout_t curr_layout = cert_flash_layout[i];
     uint32_t page_offset = 0;
 
@@ -982,8 +1003,19 @@ static status_t personalize_endorse_certificates(ujson_t *uj) {
     // in the following flash layout sections to be equal to the number of
     // endorsed extension certificates received from the host.
     for (size_t j = 0; j < curr_layout.num_certs; j++) {
+      dbg_printf("Parsing cert TLV object: %d\r\n", j);
+      busy_spin_micros(5 * 1000);
       // Extract the cert block from the `all_certs` buffer.
-      TRY(perso_tlv_get_cert_obj(next_cert, free_room, &block));
+      rom_error_t result = perso_tlv_get_cert_obj(next_cert, free_room, &block);
+      dbg_printf("Parsing result code: %x\r\n", (uint32_t)result);
+      busy_spin_micros(5 * 1000);
+      if (result != kErrorOk) {
+        dbg_printf("Error parsing cert TLV object.\r\n");
+        busy_spin_micros(5 * 1000);
+        return INTO_STATUS(result);
+      }
+      dbg_printf("Done parsing cert TLV object: %d\r\n", j);
+      busy_spin_micros(5 * 1000);
       // Round up the size to the nearest word boundary.
       uint32_t cert_size_words = util_size_to_words(block.obj_size);
       uint32_t cert_size_bytes_ru = cert_size_words * sizeof(uint32_t);
@@ -1000,10 +1032,14 @@ static status_t personalize_endorse_certificates(ujson_t *uj) {
       TRY(write_digest_to_dice_page(&curr_layout, page_offset));
     }
 
+    dbg_printf("Performing flash info page write\r\n");
+    busy_spin_micros(5 * 1000);
     TRY(flash_ctrl_info_write(curr_layout.info_page, /*page_offset=*/0,
                               util_size_to_words(sizeof(dice_page)),
                               &dice_page));
   }
+  dbg_printf("Done.\r\n");
+  busy_spin_micros(5 * 1000);
 
   // DO NOT CHANGE THE BELOW STRING without modifying the host code in
   // sw/host/provisioning/ft_lib/src/lib.rs
@@ -1190,6 +1226,7 @@ bool test_main(void) {
   } else {
     CHECK_DIF_OK(dif_gpio_write(&gpio, kGpioPinTestDone, true));
   }
+  base_printf("Personalization done.\n");
 
   // DO NOT CHANGE THE BELOW STRING without modifying the host code in
   // sw/host/provisioning/ft_lib/src/lib.rs
